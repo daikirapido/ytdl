@@ -7,7 +7,7 @@ app.get('/', async (req, res) => {
         const link = req.query.url;
         if (!link) return res.status(400).json({ error: 'No url provided.' });
 
-        const rapido = `https://rapido.zetsu.xyz/api/ytdl?url=${encodeURIComponent(youtubeUrl)}`;
+        const rapido = `https://rapido.zetsu.xyz/api/ytdl?url=${encodeURIComponent(link)}`;
         const api = await axios.get(rapido);
 
         const video = await axios.get(api.data.url, { responseType: 'arraybuffer' });
@@ -16,7 +16,7 @@ app.get('/', async (req, res) => {
         res.send(Buffer.from(video.data));
 
     } catch (error) {
-        res.json({ error: error });
+        res.json({ error: error.message });
     }
 });
 
