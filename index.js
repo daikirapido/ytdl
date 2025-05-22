@@ -5,18 +5,33 @@ const app = express();
 app.get('/', async (req, res) => {
     try {
         const link = req.query.url;
-        if (!link) return res.status(400).json({ error: 'No url provided.' });
+        if (!link) return res.status(400).json({ error: 'No url provided' });
 
         const rapido = `https://rapido.zetsu.xyz/api/ytdl?url=${encodeURIComponent(link)}`;
-        const api = await axios.get(rapido);
+        const apiResponse = await axios.get(rapido);
 
-        const video = await axios.get(api.data.url, { responseType: 'arraybuffer' });
+        if (!apiResponse.data.url) {
+            return res.status(500).json({ error: 'Failed to get video URL' });
+        }
 
-        res.set('Content-Type', 'video/mp4');
-        res.send(Buffer.from(video.data));
+        const videoResponse = await axios({
+            method: 'get',
+            url: apiResponse.data.url,
+            responseType: 'stream',
+            headers: {
+                'User-Agent': 'Mozilla/5.0'
+            }
+        });
+
+        res.set({
+            'Content-Type': 'video/mp4',
+            'Content-Disposition': 'attachment'
+        });
+
+        videoResponse.data.pipe(res);
 
     } catch (error) {
-        res.json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 });
 
